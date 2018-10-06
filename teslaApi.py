@@ -50,6 +50,21 @@ api = {
 #
 # Define Functions
 #
+def buildNotification(endpoint, data):
+	cur_temp_in_c = data['climate_state']['inside_temp']
+	trg_temp_in_c = data['climate_state']['driver_temp_setting']
+	cur_temp = round((cur_temp_in_c*(9/5))+32)
+	trg_temp = round((trg_temp_in_c*(9/5))+32)
+
+	if endpoint == "start_hvac":
+		if cur_temp < trg_temp:
+			return "Heating car from {0}F to {1}F".format(cur_temp, trg_temp)
+		else:
+			return "Cooling car from {0}F to {1}F".format(cur_temp, trg_temp)
+	elif endpoint == "stop_hvac":
+		return "HVAC Stopped at {0}F".format(cur_temp)
+			
+
 def apiAccess(endpoint, d={}):
 	# Check that tesla_config.json exists
 	if not Path(tesla_config_file).is_file():
@@ -58,7 +73,6 @@ def apiAccess(endpoint, d={}):
 
 	# Print which endpoint we're trying to access
 	print("apiAccess({0})".format(endpoint))
-
 	if endpoint not in api:
 		print("Unknown API endpoint: {}!".format(endpoint))
 		return "TeslaApi Failure!", "Invalid API endpoint {}".format(endpoint)
@@ -80,14 +94,28 @@ def apiAccess(endpoint, d={}):
 	else:
 		return "TeslaApi Failure!", "Unable to get Vehicle ID"
 
+	# Get Vehicle Data
+	for i in range(1,6):
+		data_req = requests.get(BASE_API_URL + vehID + DATA, headers=headers)
+
+		if data_req.status_code == 200:
+			data = json.loads(data_req.text)['response']
+			break
+		elif data_req.status_code == 408:
+			print("Data timeout {}/5".format(i))
+			time.sleep(5*i)
+		else:
+			print("HTTP {} error".format(data_req.status_code))
+			return "TeslaApi Failure!", "Unable to get car Data! HTTP {}".format(wake_req.status_code)
+
 	# Wake up the car
-	for i in range(1,4):
+	for i in range(1,6):
 		wake_req = requests.post(BASE_API_URL + vehID + CMD_WAKEUP, headers=headers)
 
 		if wake_req.status_code == 200:
 			break
 		elif wake_req.status_code == 408:
-			print("Wake timeout {}/3".format(i))
+			print("Wake timeout {}/5".format(i))
 			time.sleep(5*i)
 		else:
 			print("HTTP {} error".format(wake_req.status_code))
@@ -102,7 +130,7 @@ def apiAccess(endpoint, d={}):
 			api_req = requests.post(BASE_API_URL + vehID + api[endpoint][1], headers=headers, data=d)
 
 		if api_req.status_code == 200:
-			return "TeslaAPI Success", endpoint
+			return "TeslaAPI Success", buildNotification(endpoint, data)
 		elif api_req.status_code == 408:
 			print("Timeout {}/5".format(i))
 			time.sleep(5*i)
