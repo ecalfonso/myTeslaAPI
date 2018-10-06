@@ -54,25 +54,31 @@ def apiAccess(endpoint, d={}):
 	# Check that tesla_config.json exists
 	if not Path(tesla_config_file).is_file():
 		print("Missing {}!".format(tesla_config_file))
-		return 1
+		return "TeslaAPI Failure", "Server missing config file"
 
 	# Print which endpoint we're trying to access
 	print("apiAccess({0})".format(endpoint))
 
 	if endpoint not in api:
 		print("Unknown API endpoint: {}!".format(endpoint))
-		return 1
+		return "TeslaApi Failure!", "Invalid API endpoint {}".format(endpoint)
 
 	# Generate headers
 	auth_payload = json.load(open(tesla_config_file))
 	auth_req = requests.post(AUTH_URL, data=auth_payload)
-	auth_resp = json.loads(auth_req.text)
-	headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
+	if auth_req.status_code == 200:
+		auth_resp = json.loads(auth_req.text)
+		headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
+	else:
+		return "TeslaApi Failure!", "Unable to get Authorization access_token"
 
 	# Get Vehicle ID
 	vehID_req = requests.get(BASE_API_URL, headers=headers)
-	vehID_resp = json.loads(vehID_req.text)
-	vehID = vehID_resp['response'][0]['id_s']
+	if vehID_req.status_code == 200:
+		vehID_resp = json.loads(vehID_req.text)
+		vehID = vehID_resp['response'][0]['id_s']
+	else:
+		return "TeslaApi Failure!", "Unable to get Vehicle ID"
 
 	# Wake up the car
 	for i in range(1,4):
@@ -85,27 +91,24 @@ def apiAccess(endpoint, d={}):
 			time.sleep(5*i)
 		else:
 			print("HTTP {} error".format(wake_req.status_code))
-			return 1
+			return "TeslaApi Failure!", "Unable to wakeup car! HTTP {}".format(wake_req.status_code)
 
 	# Make Tesla API Access
 	for i in range(1,6):
 		# Repeat request in case of timesouts
 		if api[endpoint][0] == "GET":
-			r = requests.get(BASE_API_URL + vehID + api[endpoint][1], headers=headers)
+			api_req = requests.get(BASE_API_URL + vehID + api[endpoint][1], headers=headers)
 		elif api[endpoint][0] == "POST":
-			r = requests.post(BASE_API_URL + vehID + api[endpoint][1], headers=headers, data=d)
+			api_req = requests.post(BASE_API_URL + vehID + api[endpoint][1], headers=headers, data=d)
 
-		# Break if good response or error, continue to loop if timeout
-		if r.status_code == 200:
-			return 0
-		elif r.status_code == 408:
-			# Car probably asleep
+		if api_req.status_code == 200:
+			return "TeslaAPI Success", endpoint
+		elif api_req.status_code == 408:
 			print("Timeout {}/5".format(i))
 			time.sleep(5*i)
 			continue
 		else:
-			# Any other reason this doesn't work
-			print("HTTP {0} error: {1}".format(r.status_code, url))
-			return 1
+			print("HTTP {0} error: {1}".format(api_req.status_code, url))
+			return "TeslaApi Failure!", "Unable to wakeup car! HTTP {}".format(api_req.status_code)
 	print("Unable to connect to Tesla!")
-	return 1
+	return "TeslaApi Failure!", "Car timed out!"
