@@ -111,7 +111,7 @@ def buildNotification(endpoint, data):
 	msg += "Current Range: {0} ({1}%)\n".format(battery_range, battery_level)
 	if charging_state == "Charging":
 		hours = math.floor(time_to_full_charge_in_dec)
-		mins = round(60 * hours - time_to_full_charge_in_dec)
+		mins = round(60 * (time_to_full_charge_in_dec - hours))
 		msg += "Time til full charge ({0}%):".format(charge_limit_soc)
 		if hours > 0:
 			msg += " {}hr".format(hours)
