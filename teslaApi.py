@@ -109,7 +109,7 @@ def buildNotification(endpoint, data):
 		msg += "Rear Trunk open!\n"
 
 	# Append Charge data
-	msg += "Current Range: {0} ({1}%)\n".format(battery_range, battery_level)
+	msg += "Current Range: {0} miles ({1}%)\n".format(battery_range, battery_level)
 	if charging_state == "Charging":
 		msg += "{} miles ({}%) added this session.\n".format(charge_miles_added_rated,
 					round((charge_miles_added_rated/310)*100))
