@@ -64,6 +64,7 @@ def buildNotification(endpoint, data):
 	battery_level = data['charge_state']['battery_level']
 	battery_range = round(data['charge_state']['battery_range'])
 	charge_limit_soc = data['charge_state']['charge_limit_soc']
+	charge_miles_added_rated  = data['charge_state']['charge_miles_added_rated']
 	# Charging, Complete (Plugged but not charging), Disconnected, Stopped (Check scheduled_charging_pending)
 	charging_state  = data['charge_state']['charging_state']
 	scheduled_charging_pending = data['charge_state']['scheduled_charging_pending']
@@ -110,6 +111,8 @@ def buildNotification(endpoint, data):
 	# Append Charge data
 	msg += "Current Range: {0} ({1}%)\n".format(battery_range, battery_level)
 	if charging_state == "Charging":
+		msg += "{} miles ({}%) added this session.\n".format(charge_miles_added_rated,
+					round((charge_miles_added_rated/310)*100))
 		hours = math.floor(time_to_full_charge_in_dec)
 		mins = round(60 * (time_to_full_charge_in_dec - hours))
 		msg += "Time til full charge ({0}%):".format(charge_limit_soc)
