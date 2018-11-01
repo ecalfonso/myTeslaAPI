@@ -27,6 +27,7 @@ STATE_VEHICLE_STATE =	"/data_request/vehicle_state"
 CMD_WAKEUP =            "/wake_up"
 CMD_SET_VALET_MODE =	"/command/set_valet_mode"
 CMD_RESET_VALET_PIN =	"/command/reset_valet_pin"
+CMD_CLOSE_CHARGE_PORT =	"/command/charge_port_door_close"
 CMD_OPEN_CHARGE_PORT =	"/command/charge_port_door_open"
 CMD_SET_STANDARD_CHARGE_LIMIT = "/command/charge_standard"
 CMD_SET_MAX_CHARGE_LIMIT = "/command/charge_max_range"
@@ -43,15 +44,20 @@ CMD_STOP_HVAC =		    "/command/auto_conditioning_stop"
 CMD_REMOTE_START =	    "/command/remote_start_drive?password="
 
 api = {
-    "data": 		["GET", DATA],
-    "start_hvac":	["POST", CMD_START_HVAC],
-    "stop_hvac":	["POST", CMD_STOP_HVAC]
+    "data": 		    ["GET", DATA],
+    "close_charge_port": ["POST", CMD_CLOSE_CHARGE_PORT],
+    "open_charge_port": ["POST", CMD_OPEN_CHARGE_PORT],
+    "start_hvac":	    ["POST", CMD_START_HVAC],
+    "stop_hvac":	    ["POST", CMD_STOP_HVAC]
 }
 
 #
 # Define Functions
 #
 def buildNotification(endpoint, data):
+    # Print raw data
+    print(data)
+
     # Climate data
     cur_temp_in_c = data['climate_state']['inside_temp']
     out_temp_in_c = data['climate_state']['outside_temp']
@@ -59,6 +65,10 @@ def buildNotification(endpoint, data):
     cur_temp = round((cur_temp_in_c*(9/5))+32)
     out_temp = round((out_temp_in_c*(9/5))+32)
     trg_temp = round((trg_temp_in_c*(9/5))+32)
+
+    # Charge Port
+    charge_port_door_open = data['charge_state']['charge_port_door_open']
+    charge_port_latch = data['charge_state']['charge_port_latch']
 
     # Charge State
     battery_level = data['charge_state']['battery_level']
@@ -80,7 +90,11 @@ def buildNotification(endpoint, data):
 
     # Build first line with data relevant to endpoint
     msg = ""
-    if endpoint == "start_hvac":
+    if endpoint == "close_charge_port":
+        msg += "Charge Port Closed\n"
+    elif endpoint == "open_charge_port":
+        msg += "Charge Port Open and Unlocked\n"
+    elif endpoint == "start_hvac":
         if cur_temp < trg_temp:
             msg += "Heating {0} from {1}F to {2}F\nOutside Temp: {3}F\n".format(
                         vehicle_name,cur_temp, trg_temp, out_temp)
