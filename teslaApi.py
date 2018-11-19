@@ -18,38 +18,38 @@ BASE_API_URL =  "https://owner-api.teslamotors.com/api/1/vehicles/"
 
 DATA =                  "/data"
 
-STATE_MOBILE_ACCESS =	"/mobile_enabled"
-STATE_CHARGE_STATE =	"/data_request/charge_state"
-STATE_CLIMATE_SETTING =	"/data_request/climate_state"
+STATE_MOBILE_ACCESS =   "/mobile_enabled"
+STATE_CHARGE_STATE =    "/data_request/charge_state"
+STATE_CLIMATE_SETTING = "/data_request/climate_state"
 STATE_DRIVING_AND_POS = "/data_request/drive_state"
-STATE_GUI_SETTINGS =	"/data_request/gui_settings"
-STATE_VEHICLE_STATE =	"/data_request/vehicle_state"
+STATE_GUI_SETTINGS =    "/data_request/gui_settings"
+STATE_VEHICLE_STATE =   "/data_request/vehicle_state"
 
 CMD_WAKEUP =            "/wake_up"
-CMD_SET_VALET_MODE =	"/command/set_valet_mode"
-CMD_RESET_VALET_PIN =	"/command/reset_valet_pin"
-CMD_CLOSE_CHARGE_PORT =	"/command/charge_port_door_close"
-CMD_OPEN_CHARGE_PORT =	"/command/charge_port_door_open"
+CMD_SET_VALET_MODE =    "/command/set_valet_mode"
+CMD_RESET_VALET_PIN =   "/command/reset_valet_pin"
+CMD_CLOSE_CHARGE_PORT = "/command/charge_port_door_close"
+CMD_OPEN_CHARGE_PORT =  "/command/charge_port_door_open"
 CMD_SET_STANDARD_CHARGE_LIMIT = "/command/charge_standard"
 CMD_SET_MAX_CHARGE_LIMIT = "/command/charge_max_range"
 CMD_SET_CUSTOM_CHARGE_LIMIT = "/command/set_charge_limit?percent="
-CMD_CHARGE_START =	    "/command/charge_start"
-CMD_CHARGE_STOP =	    "/command/charge_stop"
-CMD_FLASH_LIGHTS =	    "/command/flash_lights"
-CMD_HONK_HORN =		    "/command/honk_horn"
-CMD_UNLOCK_DOOR =	    "/command/door_unlock"
-CMD_LOCK_DOOR =		    "/command/door_lock"
-CMD_SET_TEMP =		    "/command/set_temps?driver_temp=driver_temp&passenger_temp=passenger_temp"
+CMD_CHARGE_START =      "/command/charge_start"
+CMD_CHARGE_STOP =       "/command/charge_stop"
+CMD_FLASH_LIGHTS =	"/command/flash_lights"
+CMD_HONK_HORN =		"/command/honk_horn"
+CMD_UNLOCK_DOOR =	"/command/door_unlock"
+CMD_LOCK_DOOR =		"/command/door_lock"
+CMD_SET_TEMP =		"/command/set_temps?driver_temp=driver_temp&passenger_temp=passenger_temp"
 CMD_START_HVAC =    	"/command/auto_conditioning_start"
-CMD_STOP_HVAC =		    "/command/auto_conditioning_stop"
-CMD_REMOTE_START =	    "/command/remote_start_drive?password="
+CMD_STOP_HVAC =		"/command/auto_conditioning_stop"
+CMD_REMOTE_START =	"/command/remote_start_drive?password="
 
 api = {
-    "data": 		    ["GET", DATA],
+    "data":             ["GET", DATA],
     "close_charge_port": ["POST", CMD_CLOSE_CHARGE_PORT],
     "open_charge_port": ["POST", CMD_OPEN_CHARGE_PORT],
-    "start_hvac":	    ["POST", CMD_START_HVAC],
-    "stop_hvac":	    ["POST", CMD_STOP_HVAC]
+    "start_hvac":       ["POST", CMD_START_HVAC],
+    "stop_hvac":        ["POST", CMD_STOP_HVAC]
 }
 
 #
