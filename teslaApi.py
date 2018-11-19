@@ -6,7 +6,8 @@ import time
 from pathlib import Path
 
 # Define Tesla config file
-tesla_config_file = 'tesla_config.json'
+tesla_config_file = "tesla_config.json"
+tesla_token_file =  "tesla_token.json"
 
 #
 # Tesla API Definitions
@@ -143,25 +144,58 @@ def buildNotification(endpoint, data):
     return msg
 
 def apiAccess(endpoint, d={}):
-    # Check that tesla_config.json exists
-    if not Path(tesla_config_file).is_file():
-        print("Missing {}!".format(tesla_config_file))
-        return "TeslaAPI Failure", "Server missing config file"
-
     # Print which endpoint we're trying to access
     print("apiAccess({0})".format(endpoint))
     if endpoint not in api:
         print("Unknown API endpoint: {}!".format(endpoint))
         return "TeslaApi Failure!", "Invalid API endpoint {}".format(endpoint)
 
-    # Generate headers
-    auth_payload = json.load(open(tesla_config_file))
-    auth_req = requests.post(AUTH_URL, data=auth_payload)
-    if auth_req.status_code == 200:
-        auth_resp = json.loads(auth_req.text)
-        headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
+    # Check that tesla_config.json exists
+    if not Path(tesla_config_file).is_file():
+        print("Missing {}!".format(tesla_config_file))
+        return "TeslaAPI Failure", "Server missing config file"
+
+    # Access token logic
+    if Path(tesla_token_file).is_file():
+        current_token = json.load(open(tesla_token_file))
+        if round(time.time()) < current_token["created_at"] + current_token["expires_in"]:
+            # Access token should be valid
+            print("Using known access_token")
+            headers = {"Authorization": "Bearer {}".format(current_token["access_token"])}
+        else:
+            # Use Refresh token to get Access Token
+            print("Using refresh_token")
+            auth_payload = \
+            {
+            "client_id":"81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
+            "client_secret":"c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3",
+            "grant_type":"refresh_token",
+            "refresh_token":current_token["refresh_token"]
+            }
+            auth_req = requests.post(AUTH_URL, data=auth_payload)
+            if auth_req.status_code == 200:
+                auth_resp = json.loads(auth_req.text)
+                headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
+                # Dump token into tesla_token.json file
+                with open(tesla_token_file, 'w') as outfile:
+                    json.dump(auth_resp, outfile)
+                    outfile.close()
+            else:
+                return "TeslaApi Failure!", "Unable to get Authorization access_token"
     else:
-        return "TeslaApi Failure!", "Unable to get Authorization access_token"
+        # Use Tesla credentials to get Access Token
+        print("Using Tesla credentials")
+        auth_payload = json.load(open(tesla_config_file))
+        auth_req = requests.post(AUTH_URL, data=auth_payload)
+        if auth_req.status_code == 200:
+            auth_resp = json.loads(auth_req.text)
+            headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
+            # Dump token into tesla_token.json file
+            with open(tesla_token_file, 'w') as outfile:
+                    json.dump(auth_resp, outfile)
+                    outfile.close()
+        else:
+            return "TeslaApi Failure!", "Unable to get Authorization access_token"
 
     # Get Vehicle ID
     vehID_req = requests.get(BASE_API_URL, headers=headers)
