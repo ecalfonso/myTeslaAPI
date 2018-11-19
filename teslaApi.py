@@ -160,11 +160,9 @@ def apiAccess(endpoint, d={}):
         current_token = json.load(open(tesla_token_file))
         if round(time.time()) < current_token["created_at"] + current_token["expires_in"]:
             # Access token should be valid
-            print("Using known access_token")
             headers = {"Authorization": "Bearer {}".format(current_token["access_token"])}
         else:
             # Use Refresh token to get Access Token
-            print("Using refresh_token")
             auth_payload = \
             {
             "client_id":"81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
@@ -184,7 +182,6 @@ def apiAccess(endpoint, d={}):
                 return "TeslaApi Failure!", "Unable to get Authorization access_token"
     else:
         # Use Tesla credentials to get Access Token
-        print("Using Tesla credentials")
         auth_payload = json.load(open(tesla_config_file))
         auth_req = requests.post(AUTH_URL, data=auth_payload)
         if auth_req.status_code == 200:
