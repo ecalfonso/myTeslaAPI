@@ -47,6 +47,7 @@ CMD_REMOTE_START =	"/command/remote_start_drive?password="
 api = {
     "data":             ["GET", DATA],
     "close_charge_port": ["POST", CMD_CLOSE_CHARGE_PORT],
+    "lock_door":        ["POST", CMD_LOCK_DOOR],
     "open_charge_port": ["POST", CMD_OPEN_CHARGE_PORT],
     "start_hvac":       ["POST", CMD_START_HVAC],
     "stop_hvac":        ["POST", CMD_STOP_HVAC]
@@ -93,6 +94,8 @@ def buildNotification(endpoint, data):
     msg = ""
     if endpoint == "close_charge_port":
         msg += "Charge Port Closed\n"
+    elif endpoint == "lock_door":
+        msg += "Locking {}\n".format(vehicle_name)
     elif endpoint == "open_charge_port":
         msg += "Charge Port Open and Unlocked\n"
     elif endpoint == "start_hvac":
@@ -106,7 +109,7 @@ def buildNotification(endpoint, data):
         msg += "{0} HVAC Stopped at {1}F\nOutside Temp: {2}F\n".format(vehicle_name, cur_temp, out_temp)
 
     # Alert if Car is Unlocked
-    if locked != True:
+    if locked != True and endpoint != "lock_door":
         msg+= "{0} is Unlocked!\n".format(vehicle_name)
 
     # Alert if Doors/Trunks are open
