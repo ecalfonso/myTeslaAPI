@@ -2,3 +2,5 @@
 __pycache__
 backup
 execute.sh
+ownerapi_endpoints.json
+env.json

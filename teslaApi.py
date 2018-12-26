@@ -6,52 +6,16 @@ import time
 from pathlib import Path
 
 # Define Tesla config file
-tesla_config_file = "tesla_config.json"
-tesla_token_file =  "tesla_token.json"
+tesla_config_file   = "tesla_config.json"
+tesla_env_file      = "env.json"
+tesla_ownerapi_file = "ownerapi_endpoints.json"
+tesla_token_file    = "tesla_token.json"
 
-#
-# Tesla API Definitions
-# From: https://timdorr.docs.apiary.io/#reference
-#
-AUTH_URL =      "https://owner-api.teslamotors.com/oauth/token/"
-BASE_API_URL =  "https://owner-api.teslamotors.com/api/1/vehicles/"
+ERR_MSG = "TeslaAPI Failure!"
+SUC_MSG = "TeslaAPI Success!"
 
-DATA =                  "/data"
-
-STATE_MOBILE_ACCESS =   "/mobile_enabled"
-STATE_CHARGE_STATE =    "/data_request/charge_state"
-STATE_CLIMATE_SETTING = "/data_request/climate_state"
-STATE_DRIVING_AND_POS = "/data_request/drive_state"
-STATE_GUI_SETTINGS =    "/data_request/gui_settings"
-STATE_VEHICLE_STATE =   "/data_request/vehicle_state"
-
-CMD_WAKEUP =            "/wake_up"
-CMD_SET_VALET_MODE =    "/command/set_valet_mode"
-CMD_RESET_VALET_PIN =   "/command/reset_valet_pin"
-CMD_CLOSE_CHARGE_PORT = "/command/charge_port_door_close"
-CMD_OPEN_CHARGE_PORT =  "/command/charge_port_door_open"
-CMD_SET_STANDARD_CHARGE_LIMIT = "/command/charge_standard"
-CMD_SET_MAX_CHARGE_LIMIT = "/command/charge_max_range"
-CMD_SET_CUSTOM_CHARGE_LIMIT = "/command/set_charge_limit?percent="
-CMD_CHARGE_START =      "/command/charge_start"
-CMD_CHARGE_STOP =       "/command/charge_stop"
-CMD_FLASH_LIGHTS =	"/command/flash_lights"
-CMD_HONK_HORN =		"/command/honk_horn"
-CMD_UNLOCK_DOOR =	"/command/door_unlock"
-CMD_LOCK_DOOR =		"/command/door_lock"
-CMD_SET_TEMP =		"/command/set_temps?driver_temp=driver_temp&passenger_temp=passenger_temp"
-CMD_START_HVAC =    	"/command/auto_conditioning_start"
-CMD_STOP_HVAC =		"/command/auto_conditioning_stop"
-CMD_REMOTE_START =	"/command/remote_start_drive?password="
-
-api = {
-    "data":             ["GET", DATA],
-    "close_charge_port": ["POST", CMD_CLOSE_CHARGE_PORT],
-    "lock_door":        ["POST", CMD_LOCK_DOOR],
-    "open_charge_port": ["POST", CMD_OPEN_CHARGE_PORT],
-    "start_hvac":       ["POST", CMD_START_HVAC],
-    "stop_hvac":        ["POST", CMD_STOP_HVAC]
-}
+# List inaccesible APIs
+ignore_list = ["UNLOCK", "ACTUATE_TRUNK"]
 
 #
 # Define Functions
@@ -77,6 +41,8 @@ def buildNotification(endpoint, data):
     battery_range = round(data['charge_state']['battery_range'])
     charge_limit_soc = data['charge_state']['charge_limit_soc']
     charge_miles_added_rated  = data['charge_state']['charge_miles_added_rated']
+    charge_rate = data['charge_state']['charge_rate']
+    charge_rate_units = data['gui_settings']['gui_charge_rate_units']
     # Charging, Complete (Plugged but not charging), Disconnected, Stopped (Check scheduled_charging_pending)
     charging_state  = data['charge_state']['charging_state']
     scheduled_charging_pending = data['charge_state']['scheduled_charging_pending']
@@ -86,30 +52,31 @@ def buildNotification(endpoint, data):
     # Vehicle State
     locked =  data['vehicle_state']['locked']
     door_status = data['vehicle_state']['df'] | data['vehicle_state']['pf'] |\
-                  data['vehicle_state']['dr'] | data['vehicle_state']['pr'] |\
-                  data['vehicle_state']['ft'] | data['vehicle_state']['rt']
+                data['vehicle_state']['dr'] | data['vehicle_state']['pr'] |\
+                data['vehicle_state']['ft'] | data['vehicle_state']['rt']
     vehicle_name = data['vehicle_state']['vehicle_name']
 
     # Build first line with data relevant to endpoint
     msg = ""
-    if endpoint == "close_charge_port":
+    if endpoint == "CHARGE_PORT_DOOR_CLOSE":
         msg += "Charge Port Closed\n"
-    elif endpoint == "lock_door":
+    elif endpoint == "LOCK":
         msg += "Locking {}\n".format(vehicle_name)
-    elif endpoint == "open_charge_port":
+    elif endpoint == "CHARGE_PORT_DOOR_OPEN":
         msg += "Charge Port Open and Unlocked\n"
-    elif endpoint == "start_hvac":
+    elif endpoint == "CLIMATE_ON":
         if cur_temp < trg_temp:
             msg += "Heating {0} from {1}F to {2}F\nOutside Temp: {3}F\n".format(
-                        vehicle_name,cur_temp, trg_temp, out_temp)
+                    vehicle_name,cur_temp, trg_temp, out_temp)
         else:
             msg += "Cooling {0} from {1}F to {2}F\nOutside Temp: {3}F\n".format(
-                        vehicle_name, cur_temp, trg_temp, out_temp)
-    elif endpoint == "stop_hvac":
+                    vehicle_name, cur_temp, trg_temp, out_temp)
+    elif endpoint == "CLIMATE_OFF":
         msg += "{0} HVAC Stopped at {1}F\nOutside Temp: {2}F\n".format(vehicle_name, cur_temp, out_temp)
 
+
     # Alert if Car is Unlocked
-    if locked != True and endpoint != "lock_door":
+    if locked != True and endpoint != "LOCK":
         msg+= "{0} is Unlocked!\n".format(vehicle_name)
 
     # Alert if Doors/Trunks are open
@@ -129,34 +96,53 @@ def buildNotification(endpoint, data):
     # Append Charge data
     msg += "Current Range: {0} miles ({1}%)\n".format(battery_range, battery_level)
     if charging_state == "Charging":
-        msg += "{} miles ({}%) added this session.\n".format(charge_miles_added_rated,
-        round((charge_miles_added_rated/310)*100))
+        msg += "{} miles ({}%) added at {} {}\n".format(charge_miles_added_rated,
+                round((charge_miles_added_rated/310)*100),
+                charge_rate,
+                charge_rate_units)
         hours = math.floor(time_to_full_charge_in_dec)
         mins = round(60 * (time_to_full_charge_in_dec - hours))
         msg += "Time til full charge ({0}%):".format(charge_limit_soc)
         if hours > 0:
-            msg += " {}hr".format(hours)
-        msg += " {}min\n".format(mins)
+            msg += " {} hr".format(hours)
+        msg += " {} mins\n".format(mins)
     elif charging_state == "Stopped":
         if scheduled_charging_pending == True:
             msg += "Charging will begin {}".format(
-                time.strftime("%A at %I:%M %p", time.localtime(scheduled_charging_start_time)))
+                    time.strftime("%A at %I:%M %p", time.localtime(scheduled_charging_start_time)))
         else:
             msg += "Charging is Stopped\n"
 
     return msg
 
-def apiAccess(endpoint, d={}):
-    # Print which endpoint we're trying to access
+def apiAccess(endpoint, d=""):
+    # Load Tesla API Endpoints
+    if not Path(tesla_ownerapi_file).is_file():
+        print("API endpoint file missing: {}!".format(tesla_ownerapi_file))
+        return ERR_MSG, "Server missing config file: {}".format(tesla_ownerapi_file)
+    api = json.load(open(tesla_ownerapi_file))
+
+    # Check endpoint we're trying to access
     print("apiAccess({0})".format(endpoint))
     if endpoint not in api:
         print("Unknown API endpoint: {}!".format(endpoint))
-        return "TeslaApi Failure!", "Invalid API endpoint {}".format(endpoint)
+        return ERR_MSG, "Invalid API endpoint {}".format(endpoint)
+    if endpoint in ignore_list:
+        print("Trying to access blocked API call: {}".format(endpoint))
+        return ERR_MSG, "Attempted to access endpoint: {}".format(endpoint)
 
     # Check that tesla_config.json exists
     if not Path(tesla_config_file).is_file():
-        print("Missing {}!".format(tesla_config_file))
-        return "TeslaAPI Failure", "Server missing config file"
+        print("Tesla config file missing: {}!".format(tesla_config_file))
+        return ERR_MSG, "Server missing config file: {}".format(tesla_config_file)
+
+    # Load Tesla env variables
+    if not Path(tesla_env_file).is_file():
+        print("Missing Tesla env file: {}".format(tesla_env_file))
+        return ERR_MSG, "Server missing config file: {}".format(tesla_env_file)
+    env = json.load(open(tesla_env_file))
+    BASE_URL = env["OWNERAPI_BASE_URL"]
+    BASE_STREAMING_URL = env["STREAMING_SERVER_BASE_URL"]
 
     # Access token logic
     if Path(tesla_token_file).is_file():
@@ -173,7 +159,7 @@ def apiAccess(endpoint, d={}):
             "grant_type":"refresh_token",
             "refresh_token":current_token["refresh_token"]
             }
-            auth_req = requests.post(AUTH_URL, data=auth_payload)
+            auth_req = requests.post(BASE_URL + api["AUTHENTICATE"]["URI"], data=auth_payload)
             if auth_req.status_code == 200:
                 auth_resp = json.loads(auth_req.text)
                 headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
@@ -182,11 +168,11 @@ def apiAccess(endpoint, d={}):
                     json.dump(auth_resp, outfile)
                     outfile.close()
             else:
-                return "TeslaApi Failure!", "Unable to get Authorization access_token"
+                return ERR_MSG, "Unable to get Authorization access_token"
     else:
         # Use Tesla credentials to get Access Token
         auth_payload = json.load(open(tesla_config_file))
-        auth_req = requests.post(AUTH_URL, data=auth_payload)
+        auth_req = requests.post(BASE_URL + api["AUTHENTICATE"]["URI"], data=auth_payload)
         if auth_req.status_code == 200:
             auth_resp = json.loads(auth_req.text)
             headers = {"Authorization": "Bearer {}".format(auth_resp['access_token'])}
@@ -195,19 +181,19 @@ def apiAccess(endpoint, d={}):
                     json.dump(auth_resp, outfile)
                     outfile.close()
         else:
-            return "TeslaApi Failure!", "Unable to get Authorization access_token"
+            return ERR_MSG, "Unable to get Authorization access_token"
 
     # Get Vehicle ID
-    vehID_req = requests.get(BASE_API_URL, headers=headers)
+    vehID_req = requests.get(BASE_URL + api["VEHICLE_LIST"]["URI"], headers=headers)
     if vehID_req.status_code == 200:
         vehID_resp = json.loads(vehID_req.text)
         vehID = vehID_resp['response'][0]['id_s']
     else:
-        return "TeslaApi Failure!", "Unable to get Vehicle ID"
+        return ERR_MSG, "Unable to get Vehicle ID"
 
     # Wake up the car
     for i in range(1,6):
-        wake_req = requests.post(BASE_API_URL + vehID + CMD_WAKEUP, headers=headers)
+        wake_req = requests.post(BASE_URL + api["WAKE_UP"]["URI"].format(vehicle_id=vehID), headers=headers)
 
         if wake_req.status_code == 200:
             break
@@ -216,12 +202,12 @@ def apiAccess(endpoint, d={}):
             time.sleep(5*i)
         else:
             print("HTTP {} error".format(wake_req.status_code))
-            return "TeslaApi Failure!", "Unable to wakeup car! HTTP {}".format(wake_req.status_code)
+            return ERR_MSG, "Unable to wakeup car! HTTP {}".format(wake_req.status_code)
 
     # Get Vehicle Data
     data_flag = 0
     for i in range(1,6):
-        data_req = requests.get(BASE_API_URL + vehID + DATA, headers=headers)
+        data_req = requests.get(BASE_URL + api["VEHICLE_DATA"]["URI"].format(vehicle_id=vehID), headers=headers)
 
         if data_req.status_code == 200:
             data = json.loads(data_req.text)['response']
@@ -232,17 +218,17 @@ def apiAccess(endpoint, d={}):
             time.sleep(5*i)
         else:
             print("HTTP {} error".format(data_req.status_code))
-            return "TeslaApi Failure!", "Unable to get car Data! HTTP {}".format(wake_req.status_code)
+            return ERR_MSG, "Unable to get car Data! HTTP {}".format(wake_req.status_code)
 
     if data_flag == 0:
-        return "TeslaApi Failure!", "Unable to get car Data! Timeout limit reached!"
+        return ERR_MSG, "Unable to get car Data! Timeout limit reached!"
 
     # Make Tesla API Access
     for i in range(1,6):
-        if api[endpoint][0] == "GET":
-            api_req = requests.get(BASE_API_URL + vehID + api[endpoint][1], headers=headers)
-        elif api[endpoint][0] == "POST":
-            api_req = requests.post(BASE_API_URL + vehID + api[endpoint][1], headers=headers, data=d)
+        if api[endpoint]["TYPE"] == "GET":
+            api_req = requests.get(BASE_URL + api[endpoint]["URI"].format(vehicle_id=vehID), headers=headers)
+        elif api[endpoint]["TYPE"] == "POST":
+            api_req = requests.post(BASE_URL + api[endpoint]["URI"].format(vehicle_id=vehID), headers=headers, data=d)
 
         if api_req.status_code == 200:
             return "TeslaAPI Success", buildNotification(endpoint, data)
@@ -252,8 +238,8 @@ def apiAccess(endpoint, d={}):
             continue
         else:
             print("HTTP {0} error: {1}".format(api_req.status_code, url))
-            return "TeslaApi Failure!", "Unable to wakeup car! HTTP {}".format(api_req.status_code)
+            return ERR_MSG, "Unable to wakeup car! HTTP {}".format(api_req.status_code)
 
     # If we reach here, API access failed
     print("Unable to connect to Tesla!")
-    return "TeslaApi Failure!", "Car timed out during API access!"
+    return ERR_MSG, "Car timed out during API access!"
