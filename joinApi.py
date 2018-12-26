@@ -25,9 +25,12 @@ def joinPush(title, text):
     deviceId = join_cfg['deviceId']
 
     # Build Join Request
-    url = JOIN_API_URL + JOIN_DEV_ID.format(deviceId) + JOIN_API_KEY.format(apikey) +\
-    JOIN_TITLE.format(urllib.parse.quote(title)) + JOIN_TEXT.format(urllib.parse.quote(text))
-    JOIN_DEV_ID = JOIN_DEV_ID.format(deviceId)
+    url = \
+        JOIN_API_URL + \
+        JOIN_DEV_ID.format(deviceId) + \
+        JOIN_API_KEY.format(apikey) + \
+        JOIN_TITLE.format(urllib.parse.quote(title)) + \
+        JOIN_TEXT.format(urllib.parse.quote(text))
 
     # Make Join request
     requests.get(url)
