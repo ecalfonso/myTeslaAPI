@@ -4,7 +4,7 @@ import urllib.parse
 
 from pathlib import Path
 
-def joinPush(title, text):
+def push(title, text):
     # Define Join config file
     join_config_file = 'join_config.json'
 
@@ -34,3 +34,4 @@ def joinPush(title, text):
 
     # Make Join request
     requests.get(url)
+    return 0
