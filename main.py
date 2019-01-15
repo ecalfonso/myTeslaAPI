@@ -1,4 +1,5 @@
 import joinApi
+import math
 import teslaApi
 import time
 import sys
@@ -169,7 +170,7 @@ if charging_state == "Charging":
                 charge_rate,
                 charge_rate_units)
     else:
-        msg += "{}%s ({} miles) added at {} {}\n".format(
+        msg += "{}% ({} miles) added at {} {}\n".format(
                 round((charge_miles_added_rated/310)*100),
                 charge_miles_added_rated,
                 charge_rate,
