@@ -186,7 +186,7 @@ if charging_state == "Charging":
     msg += " {} mins\n".format(mins)
 elif charging_state == "Stopped":
     if scheduled_charging_pending == True:
-        msg += "Charging will begin {}".format(
+        msg += "Charging will begin {}\n".format(
                 time.strftime("%A at %I:%M %p", time.localtime(scheduled_charging_start_time)))
     else:
         msg += "Charging is Stopped\n"
