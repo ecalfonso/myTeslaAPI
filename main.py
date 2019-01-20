@@ -23,23 +23,28 @@ user_cmd = sys.argv[1].lower()
 
 if "data" in user_cmd or "status" in user_cmd:
     cmd = CMD.DATA
-elif ("turn on" in user_cmd and \
-        ("ac" in user_cmd or \
-        "air conditioner" in user_cmd or \
-        "fans" in user_cmd)) or \
-    "warm up" in user_cmd:
+elif "turn on the ac" in user_cmd or \
+        "turn on the air conditioner" in user_cmd or \
+        "turn on the fans" in user_cmd or \
+        "warm up" in user_cmd:
     cmd = CMD.AC_ON
-elif "turn off" in user_cmd and \
-    ("ac" in user_cmd or \
-    "air conditioner" in user_cmd or \
-    "fans" in user_cmd):
+elif "turn off the ac" in user_cmd and \
+        "turn off the air conditioner" in user_cmd or \
+        "turn off the fans" in user_cmd or \
+        "stop warming up" in user_cmd:
     cmd = CMD.AC_OFF
-elif ("open" in user_cmd or "unlock" in user_cmd) and \
-    ("charge port" in user_cmd):
+elif "open the charge port" in user_cmd or \
+        "unlock the charge port" in user_cmd or \
+        "open the charger port" in user_cmd or \
+        "unlock the charger port" in user_cmd:
     cmd = CMD.CHARGE_PORT_OPEN
-elif "close" in user_cmd and "charge port" in user_cmd:
+elif "close the charge port" in user_cmd or \
+        "lock the charge port" in user_cmd or \
+        "close the charger port" in user_cmd or \
+        "lock the charger port" in user_cmd:
     cmd = CMD.CHARGE_PORT_CLOSE
-elif "lock" in user_cmd:
+elif "lock the car" in user_cmd or \
+        "lock the doors" in user_cmd:
     cmd = CMD.LOCK
 else:
     print("Unable to process input string: {}".format(user_cmd))
