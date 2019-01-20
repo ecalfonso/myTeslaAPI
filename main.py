@@ -15,7 +15,9 @@ CMD_LIST = "DATA \
         AC_ON \
         AC_OFF \
         CHARGE_PORT_OPEN \
-        CHARGE_PORT_CLOSE"
+        CHARGE_PORT_CLOSE \
+        CHARGE_START \
+        CHARGE_STOP"
 CMD = Enum("CMD", CMD_LIST)
 
 # Parse incoming command
@@ -46,6 +48,13 @@ elif "close the charge port" in user_cmd or \
 elif "lock the car" in user_cmd or \
         "lock the doors" in user_cmd:
     cmd = CMD.LOCK
+elif "start charging" in user_cmd or \
+        "begin charging" in user_cmd or \
+        "charge now" in user_cmd:
+    cmd = CMD.CHARGE_START
+elif "stop charging" in user_cmd or \
+        "end charging" in user_cmd:
+    cmd = CMD.CHARGE_STOP
 else:
     print("Unable to process input string: {}".format(user_cmd))
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
@@ -158,6 +167,26 @@ elif cmd == CMD.LOCK:
             msg += "Failed to lock {0}!\n".format(vehicle_name)
         else:
             msg += "Locking {0}\n".format(vehicle_name)
+
+elif cmd == CMD.CHARGE_START:
+    if charging_state == "Stopped":
+        data2 = teslaApi.access("START_CHARGE")
+        if data2 == -1:
+            msg += "Unable to start charging for {0}!\n".format(vehicle_name)
+        else:
+            msg += "Starting charge for {0}\n".format(vehicle_name)
+    else:
+        msg += "{0} not currently plugged in\n".format(vehicle_name)
+
+elif cmd == CMD.CHARGE_STOP:
+    if charging_state == "Charging":
+        data2 = teslaApi.access("STOP_CHARGE")
+        if data2 == -1:
+            msg += "Unable to stop charging for {0}!\n".format(vehicle_name)
+        else:
+            msg += "Stopping charge for {0}\n".format(vehicle_name)
+    else:
+        msg += "{0} not currently charging\n".format(vehicle_name)
 
 # Append more vehicle info after user_cmd specific text
 if charge_rate_units == "mi/hr":
