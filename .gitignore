@@ -2,3 +2,4 @@
 __pycache__
 backup
 execute.sh
+*.swp
