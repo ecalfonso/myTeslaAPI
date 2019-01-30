@@ -30,7 +30,7 @@ elif "turn on the ac" in user_cmd or \
         "turn on the fans" in user_cmd or \
         "warm up" in user_cmd:
     cmd = CMD.AC_ON
-elif "turn off the ac" in user_cmd and \
+elif "turn off the ac" in user_cmd or \
         "turn off the air conditioner" in user_cmd or \
         "turn off the fans" in user_cmd or \
         "stop warming up" in user_cmd:
