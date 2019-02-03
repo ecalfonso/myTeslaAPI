@@ -100,12 +100,12 @@ vehicle_name = data['vehicle_state']['vehicle_name']
 # Process initial data before executing User command
 msg = ""
 if cmd == CMD.DATA:
-    data2 = data
+    cmd_resp = data
 
 elif cmd == CMD.AC_ON:
     if data["climate_state"]["is_auto_conditioning_on"] == False:
-        data2 = teslaApi.access("CLIMATE_ON")
-        if data2 == -1:
+        cmd_resp = teslaApi.access("CLIMATE_ON")
+        if cmd_resp == -1:
             msg += "Failed to turn AC on for {0}!\n".format(vehicle_name)
         else:
             if inner_temp < target_temp:
@@ -119,8 +119,8 @@ elif cmd == CMD.AC_ON:
 
 elif cmd == CMD.AC_OFF:
     if data["climate_state"]["is_auto_conditioning_on"] == True:
-        data2 = teslaApi.access("CLIMATE_OFF")
-        if data2 == -1:
+        cmd_resp = teslaApi.access("CLIMATE_OFF")
+        if cmd_resp == -1:
             msg += "Failed to turn AC off for {0}!\n".format(vehicle_name)
         else:
             msg += "{0} HVAC Stopped at {1}F\nOutside Temp: {2}F\n".format(vehicle_name, inner_temp, outer_temp)
@@ -135,8 +135,8 @@ elif cmd == CMD.CHARGE_PORT_CLOSE:
             msg += "Charge Port open and engaged. May be charging! Will not close Charge Port for {0}\n".format(
                     vehicle_name)
         else:
-            data2 = teslaApi.access("CHARGE_PORT_DOOR_CLOSE")
-            if data2 == -1:
+            cmd_resp = teslaApi.access("CHARGE_PORT_DOOR_CLOSE")
+            if cmd_resp == -1:
                 msg += "Failed to close Charge Port for {0}!\n".format(vehicle_name)
             else:
                 msg += "Closing Charge Port for {0}\n".format(vehicle_name)
@@ -144,16 +144,16 @@ elif cmd == CMD.CHARGE_PORT_CLOSE:
 elif cmd == CMD.CHARGE_PORT_OPEN:
     if charge_port_door_open == True:
         if charge_port_latch == "Engaged":
-            data2 = teslaApi.access("CHARGE_PORT_DOOR_OPEN")
-            if data2 == -1:
+            cmd_resp = teslaApi.access("CHARGE_PORT_DOOR_OPEN")
+            if cmd_resp == -1:
                 msg += "Failed to Unlock Charge Port for {0}!\n".format(vehicle_name)
             else:
                 msg += "Unlocking Charge Port for {0}\n".format(vehicle_name)
         else:
             msg += "Charge Port already open for {0}\n".format(vehicle_name)
     else:
-        data2 = teslaApi.access("CHARGE_PORT_DOOR_OPEN")
-        if data2 == -1:
+        cmd_resp = teslaApi.access("CHARGE_PORT_DOOR_OPEN")
+        if cmd_resp == -1:
             msg += "Failed to Open Charge Port for {0}!\n".format(vehicle_name)
         else:
             msg += "Opening Charge Port for {0}\n".format(vehicle_name)
@@ -162,16 +162,16 @@ elif cmd == CMD.LOCK:
     if locked == True:
         msg += "{0} is already locked!\n".format(vehicle_name)
     else:
-        data2 = teslaApi.access("LOCK")
-        if data2 == -1:
+        cmd_resp = teslaApi.access("LOCK")
+        if cmd_resp == -1:
             msg += "Failed to lock {0}!\n".format(vehicle_name)
         else:
             msg += "Locking {0}\n".format(vehicle_name)
 
 elif cmd == CMD.CHARGE_START:
     if charging_state == "Stopped":
-        data2 = teslaApi.access("START_CHARGE")
-        if data2 == -1:
+        cmd_resp = teslaApi.access("START_CHARGE")
+        if cmd_resp == -1:
             msg += "Unable to start charging for {0}!\n".format(vehicle_name)
         else:
             msg += "Starting charge for {0}\n".format(vehicle_name)
@@ -180,8 +180,8 @@ elif cmd == CMD.CHARGE_START:
 
 elif cmd == CMD.CHARGE_STOP:
     if charging_state == "Charging":
-        data2 = teslaApi.access("STOP_CHARGE")
-        if data2 == -1:
+        cmd_resp = teslaApi.access("STOP_CHARGE")
+        if cmd_resp == -1:
             msg += "Unable to stop charging for {0}!\n".format(vehicle_name)
         else:
             msg += "Stopping charge for {0}\n".format(vehicle_name)
