@@ -148,18 +148,18 @@ def carWakeUp():
         return -1
 
     # Loop polling sleep status and send wake_up while asleep/offline
-    for i in range (1,6):
+    for i in range (1,46):
         sleepStatus_req = requests.get(env["OWNERAPI_BASE_URL"] + \
                 api["VEHICLE_LIST"]["URI"], headers=headers)
 
         if sleepStatus_req.status_code == 200:
             sleepStatus_resp = json.loads(sleepStatus_req.text)
             if sleepStatus_resp["response"][0]["state"] in ["asleep", "offline"]:
-                print("Wakeup request {}/5 - Sleep Status: {}".format(
+                print("Wakeup request {}/45 - Sleep Status: {}".format(
                     i, sleepStatus_resp["response"][0]["state"]))
                 requests.post(env["OWNERAPI_BASE_URL"] + \
                         api["WAKE_UP"]["URI"].format(vehicle_id=vehID), headers=headers)
-                time.sleep(10)
+                time.sleep(1)
             elif sleepStatus_resp["response"][0]["state"] == "online":
                 return 0
         else:
