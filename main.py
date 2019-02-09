@@ -17,7 +17,9 @@ CMD_LIST = "DATA \
         CHARGE_PORT_OPEN \
         CHARGE_PORT_CLOSE \
         CHARGE_START \
-        CHARGE_STOP"
+        CHARGE_STOP \
+        HONK_HORN \
+        FLASH_LIGHTS"
 CMD = Enum("CMD", CMD_LIST)
 
 # Parse incoming command
@@ -55,6 +57,10 @@ elif "start charging" in user_cmd or \
 elif "stop charging" in user_cmd or \
         "end charging" in user_cmd:
     cmd = CMD.CHARGE_STOP
+elif "honk the horn" in user_cmd:
+    cmd = CMD.HONK_HORN
+elif "flash the lights" in user_cmd:
+    cmd = CMD.FLASH_LIGHTS
 else:
     print("Unable to process input string: {}".format(user_cmd))
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
@@ -68,6 +74,10 @@ if teslaApi.carWakeUp() == -1:
 
 # Get initial car data
 data = teslaApi.access("VEHICLE_DATA")
+if data == -1:
+    print("Unable to get Vehicle data!")
+    joinApi.push(ERR_MSG, "Unable to get Vehicle data!")
+    exit()
 
 # Extract climate data
 inner_temp = round(((data['climate_state']['inside_temp'])*(9/5)) + 32)
@@ -187,6 +197,20 @@ elif cmd == CMD.CHARGE_STOP:
             msg += "Stopping charge for {0}\n".format(vehicle_name)
     else:
         msg += "{0} not currently charging\n".format(vehicle_name)
+
+elif cmd == CMD.HONK_HORN:
+    cmd_resp = teslaApi.access("HONK_HORN")
+    if cmd_resp == -1:
+        msg += "Unable to honk {0}'s horn!\n".format(vehicle_name)
+    else:
+        msg += "Honked {0}'s horn\n".format(vehicle_name)
+
+elif cmd == CMD.FLASH_LIGHTS:
+    cmd_resp = teslaApi.access("FLASH_LIGHTS")
+    if cmd_resp == -1:
+        msg += "Unable to flash {0}'s lights".format(vehicle_name)
+    else:
+        msg += "Flashed {0}'s lights \n".format(vehicle_name)
 
 # Append more vehicle info after user_cmd specific text
 if charge_rate_units == "mi/hr":
