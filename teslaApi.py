@@ -63,11 +63,13 @@ def getHeaders(api, env):
                 api["AUTHENTICATE"]["URI"], data=auth_payload)
         if auth_req.status_code == 200:
             auth_resp = json.loads(auth_req.text)
-            JSON_HEADERS["Authorization"] = "Bearer {}".format(current_token["access_token"])
+            JSON_HEADERS["Authorization"] = "Bearer {}".format(auth_resp["access_token"])
             # Dump token into tesla_token.json file
             with open(tesla_token_file, 'w') as outfile:
                 json.dump(auth_resp, outfile)
                 outfile.close()
+
+            return JSON_HEADERS
         else:
             print("Unable to get access_token from Tesla credentials!")
             return -1
