@@ -6,8 +6,6 @@ import sys
 
 from enum import Enum
 
-BEGIN_T = time.time()
-
 ERR_MSG = "TeslaAPI Failure!"
 SUC_MSG = "TeslaAPI"
 
@@ -68,18 +66,11 @@ else:
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
     exit()
 
-print("Timing: Parsed user_cmd: {}".format(time.time() - BEGIN_T))
-BEGIN_T = time.time()
-
-
 # Wake up car
 if teslaApi.carWakeUp() == -1:
     print("Unable to wakeup Tesla!")
     joinApi.push(ERR_MSG, "Unable to wakeup Tesla!")
     exit()
-
-print("Timing: Waking up car: {}".format(time.time() - BEGIN_T))
-BEGIN_T = time.time()
 
 # Get initial car data
 data = teslaApi.access("VEHICLE_DATA")
@@ -87,9 +78,6 @@ if data == -1:
     print("Unable to get Vehicle data!")
     joinApi.push(ERR_MSG, "Unable to get Vehicle data!")
     exit()
-
-print("Timing: Getting vehicle_data: {}".format(time.time() - BEGIN_T))
-BEGIN_T = time.time()
 
 # Extract climate data
 inner_temp = round(((data['climate_state']['inside_temp'])*(9/5)) + 32)
@@ -258,10 +246,5 @@ elif charging_state == "Stopped":
 
 msg += "time: {}\n".format(time.strftime("%H:%M", time.localtime()))
 
-print("Timing: Executing user_cmd: {}".format(time.time() - BEGIN_T))
-BEGIN_T = time.time()
-
 # Final joinPush once user_cmd has executed
 joinApi.push(SUC_MSG, msg)
-
-print("Timing: Final joinApi.push(): {}".format(time.time() - BEGIN_T))
