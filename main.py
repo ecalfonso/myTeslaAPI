@@ -1,4 +1,5 @@
 import joinApi
+import json
 import math
 import teslaApi
 import time
@@ -11,6 +12,7 @@ SUC_MSG = "TeslaAPI"
 
 # Define command Enums
 CMD_LIST = "DATA \
+        DUMP \
         LOCK \
         AC_ON \
         AC_OFF \
@@ -27,6 +29,8 @@ user_cmd = sys.argv[1].lower()
 
 if "data" in user_cmd or "status" in user_cmd:
     cmd = CMD.DATA
+elif "dump" in user_cmd:
+    cmd = CMD.DUMP
 elif "turn on the ac" in user_cmd or \
         "turn on the air conditioner" in user_cmd or \
         "turn on the fans" in user_cmd or \
@@ -111,6 +115,11 @@ vehicle_name = data['vehicle_state']['vehicle_name']
 msg = ""
 if cmd == CMD.DATA:
     cmd_resp = data
+
+elif cmd == CMD.DUMP:
+    print(data)
+    joinApi.push(SUC_MSG, json.dumps(data))
+    exit()
 
 elif cmd == CMD.AC_ON:
     if data["climate_state"]["is_auto_conditioning_on"] == False:
