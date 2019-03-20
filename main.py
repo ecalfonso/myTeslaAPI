@@ -233,12 +233,12 @@ if charging_state == "Charging":
     if charge_rate_units == "mi/hr":
         msg += "{} miles ({}%) added at {} {}\n".format(
                 charge_miles_added_rated,
-                round((charge_miles_added_rated/310)*100),
+                round((charge_miles_added_rated/325)*100),
                 charge_rate,
                 charge_rate_units)
     else:
         msg += "{}% ({} miles) added at {} {}\n".format(
-                round((charge_miles_added_rated/310)*100),
+                round((charge_miles_added_rated/325)*100),
                 charge_miles_added_rated,
                 charge_rate,
                 charge_rate_units)
