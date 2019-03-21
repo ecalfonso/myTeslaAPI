@@ -123,7 +123,8 @@ def access(endpoint, data={}):
     if api_req.status_code == 200:
         return json.loads(api_req.text)["response"]
     else:
-        print("Tesla API Access failed! Http error {}".format(api_req.status_code))
+        print("Tesla API Access failed! Http error {}\n{}\n".format(
+            api_req.status_code, api_req.text))
         return -1
 
 def carWakeUp():

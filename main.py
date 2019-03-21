@@ -21,7 +21,9 @@ CMD_LIST = "DATA \
         CHARGE_START \
         CHARGE_STOP \
         HONK_HORN \
-        FLASH_LIGHTS"
+        FLASH_LIGHTS \
+        SENTRY_MODE_ON \
+        SENTRY_MODE_OFF"
 CMD = Enum("CMD", CMD_LIST)
 
 # Parse incoming command
@@ -65,6 +67,20 @@ elif "honk the horn" in user_cmd:
     cmd = CMD.HONK_HORN
 elif "flash the lights" in user_cmd:
     cmd = CMD.FLASH_LIGHTS
+elif user_cmd in \
+        [
+            "turn on sentry mode",
+            "turn security on",
+            "watch yourself"
+        ]:
+    cmd = CMD.SENTRY_MODE_ON
+elif user_cmd in \
+        [
+            "turn off sentry mode",
+            "turn security off",
+            "stop watching youself"
+        ]:
+    cmd = CMD.SENTRY_MODE_OFF
 else:
     print("Unable to process input string: {}".format(user_cmd))
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
@@ -110,6 +126,7 @@ door_status = data['vehicle_state']['df'] | data['vehicle_state']['pf'] |\
         data['vehicle_state']['dr'] | data['vehicle_state']['pr'] |\
         data['vehicle_state']['ft'] | data['vehicle_state']['rt']
 vehicle_name = data['vehicle_state']['vehicle_name']
+sentry_mode = data['vehicle_state']['sentry_mode']
 
 # Process initial data before executing User command
 msg = ""
@@ -221,6 +238,28 @@ elif cmd == CMD.FLASH_LIGHTS:
     else:
         msg += "Flashed {0}'s lights \n".format(vehicle_name)
 
+elif cmd == CMD.SENTRY_MODE_ON:
+    if sentry_mode == True:
+        msg += "Sentry Mode already active for {}\n".format(vehicle_name)
+    else:
+        in_data = '{"on":"true"}'
+        cmd_resp = teslaApi.access("SET_SENTRY_MODE", data=in_data)
+        if cmd_resp == -1:
+            msg += "Unable to turn on Sentry Mode for {}\n".format(vehicle_name)
+        else:
+            msg += "Turning on Sentry Mode for {}\n".format(vehicle_name)
+
+elif cmd == CMD.SENTRY_MODE_OFF:
+    if sentry_mode != True:
+        msg += "Sentry Mode is not active for {}".format(vehicle_name)
+    else:
+        in_data = '{"on":"false"}'
+        cmd_resp = teslaApi.access("SET_SENTRY_MODE", data=in_data)
+        if cmd_resp == -1:
+            msg += "Unable to turn off Sentry Mode for {}\n".format(vehicle_name)
+        else:
+            msg += "Turning off Sentry Mode for {}\n".format(vehicle_name)
+
 # Append more vehicle info after user_cmd specific text
 if charge_rate_units == "mi/hr":
     msg += "Current Range: {0} miles ({1}%)\n".format(battery_range, battery_level)
@@ -252,6 +291,9 @@ elif charging_state == "Stopped":
                 time.strftime("%A at %I:%M %p", time.localtime(scheduled_charging_start_time)))
     else:
         msg += "Charging is Stopped\n"
+
+if sentry_mode == True:
+    msg += "Sentry Mode is active\n"
 
 msg += "time: {}\n".format(time.strftime("%H:%M", time.localtime()))
 
