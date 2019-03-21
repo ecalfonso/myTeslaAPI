@@ -29,56 +29,77 @@ CMD = Enum("CMD", CMD_LIST)
 # Parse incoming command
 user_cmd = sys.argv[1].lower()
 
-if "data" in user_cmd or "status" in user_cmd:
+if user_cmd in [
+        "data",
+        "status"
+        ]:
     cmd = CMD.DATA
-elif "dump" in user_cmd:
+elif user_cmd in [
+        "dump"
+        ]:
     cmd = CMD.DUMP
-elif "turn on the ac" in user_cmd or \
-        "turn on the air conditioner" in user_cmd or \
-        "turn on the fans" in user_cmd or \
-        "warm up" in user_cmd:
+elif user_cmd in [
+        "turn on the ac",
+        "turn on the air conditioner",
+        "turn on the fans",
+        "warm up"
+        ]:
     cmd = CMD.AC_ON
-elif "turn off the ac" in user_cmd or \
-        "turn off the air conditioner" in user_cmd or \
-        "turn off the fans" in user_cmd or \
-        "stop warming up" in user_cmd:
+elif user_cmd in [
+        "turn off the ac",
+        "turn off the air conditioner",
+        "turn off the fans",
+        "stop warming up"
+        ]:
     cmd = CMD.AC_OFF
-elif "open the charge port" in user_cmd or \
-        "unlock the charge port" in user_cmd or \
-        "open the charger port" in user_cmd or \
-        "unlock the charger port" in user_cmd:
+elif user_cmd in [
+        "open the charge port",
+        "unlock the charge port",
+        "open the charger port",
+        "unlock the charger port"
+        ]:
     cmd = CMD.CHARGE_PORT_OPEN
-elif "close the charge port" in user_cmd or \
-        "lock the charge port" in user_cmd or \
-        "close the charger port" in user_cmd or \
-        "lock the charger port" in user_cmd:
+elif user_cmd in [
+        "close the charge port",
+        "lock the charge port",
+        "close the charger port",
+        "lock the charger port"
+        ]:
     cmd = CMD.CHARGE_PORT_CLOSE
-elif "lock the car" in user_cmd or \
-        "lock the doors" in user_cmd:
+elif user_cmd in [
+        "lock the car",
+        "lock the doors"
+        ]:
     cmd = CMD.LOCK
-elif "start charging" in user_cmd or \
-        "begin charging" in user_cmd or \
-        "charge now" in user_cmd:
+elif user_cmd in [
+        "start charging",
+        "begin charging",
+        "charge now"
+        ]:
     cmd = CMD.CHARGE_START
-elif "stop charging" in user_cmd or \
-        "end charging" in user_cmd:
+elif user_cmd in [
+        "stop charging",
+        "end charging"
+        ]:
     cmd = CMD.CHARGE_STOP
-elif "honk the horn" in user_cmd:
+elif user_cmd in [
+        "honk the horn"
+        ]:
     cmd = CMD.HONK_HORN
-elif "flash the lights" in user_cmd:
+elif user_cmd in [
+        "flash the lights"
+        ]:
     cmd = CMD.FLASH_LIGHTS
-elif user_cmd in \
-        [
-            "turn on sentry mode",
-            "turn security on",
-            "watch yourself"
+elif user_cmd in [
+        "turn on sentry mode",
+        "turn security on",
+        "watch yourself"
         ]:
     cmd = CMD.SENTRY_MODE_ON
-elif user_cmd in \
-        [
-            "turn off sentry mode",
-            "turn security off",
-            "stop watching youself"
+elif user_cmd in [
+        "turn off sentry mode",
+        "turn security off",
+        "stop watching youself"
         ]:
     cmd = CMD.SENTRY_MODE_OFF
 else:
