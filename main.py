@@ -316,7 +316,7 @@ elif charging_state == "Stopped":
 if sentry_mode == True:
     msg += "Sentry Mode is active\n"
 
-msg += "time: {}\n".format(time.strftime("%H:%M", time.localtime()))
+msg += "{}\n".format(time.strftime("%A @ %I:%M %p", time.localtime()))
 
 # Final joinPush once user_cmd has executed
 joinApi.push(SUC_MSG, msg)
