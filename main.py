@@ -23,7 +23,8 @@ CMD_LIST = "DATA \
         HONK_HORN \
         FLASH_LIGHTS \
         SENTRY_MODE_ON \
-        SENTRY_MODE_OFF"
+        SENTRY_MODE_OFF \
+        SET_CHARGE_LIMIT"
 CMD = Enum("CMD", CMD_LIST)
 
 # Parse incoming command
@@ -102,6 +103,31 @@ elif user_cmd in [
         "stop watching youself"
         ]:
     cmd = CMD.SENTRY_MODE_OFF
+elif "set the charge limit to" in user_cmd \
+        or "set charge limit to" in user_cmd:
+    cmd = CMD.SET_CHARGE_LIMIT
+
+    # Parse input
+    percent = user_cmd.split(' ')[-1]
+    if percent in [
+            'percent',
+            '%']:
+        percent = user_cmd.split(' ')[-2]
+
+    if percent == 'max':
+        percent = 100
+    elif percent == 'normal':
+        percent = 90
+    else:
+        if percent[-1] == '%':
+            percent = percent[:-1]
+        if percent.isdigit():
+            percent = int(percent)
+            percent = min(percent, 100)
+            percent = max(percent, 50)
+        else:
+            joinApi.push(ERR_MSG, "Invalid Charge Limit: {}".format(percent))
+            exit()
 else:
     print("Unable to process input string: {}".format(user_cmd))
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
@@ -280,6 +306,14 @@ elif cmd == CMD.SENTRY_MODE_OFF:
             msg += "Unable to turn off Sentry Mode for {}\n".format(vehicle_name)
         else:
             msg += "Turning off Sentry Mode for {}\n".format(vehicle_name)
+
+elif cmd == CMD.SET_CHARGE_LIMIT:
+    in_data = '{"percent":"'+str(percent)+'"}'
+    cmd_resp = teslaApi.access("CHANGE_CHARGE_LIMIT", data=str(in_data))
+    if cmd_resp == -1:
+        msg += "Unable to set {}'s charge limit to {}\n".format(vehicle_name, percent)
+    else:
+        msg += "Setting {}'s charge limit to {}\n".format(vehicle_name, percent)
 
 # Append more vehicle info after user_cmd specific text
 if charge_rate_units == "mi/hr":
