@@ -92,13 +92,13 @@ elif user_cmd in [
     cmd = CMD.FLASH_LIGHTS
 elif user_cmd in [
         "turn on sentry mode",
-        "turn security on",
+        "turn on security",
         "watch yourself"
         ]:
     cmd = CMD.SENTRY_MODE_ON
 elif user_cmd in [
         "turn off sentry mode",
-        "turn security off",
+        "turn off security",
         "stop watching youself"
         ]:
     cmd = CMD.SENTRY_MODE_OFF
