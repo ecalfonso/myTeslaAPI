@@ -169,7 +169,8 @@ time_to_full_charge_in_dec = data['charge_state']['time_to_full_charge']
 
 # Vehicle State
 locked =  data['vehicle_state']['locked']
-door_status = data['vehicle_state']['df'] | data['vehicle_state']['pf'] |\
+door_status = \
+        data['vehicle_state']['df'] | data['vehicle_state']['pf'] |\
         data['vehicle_state']['dr'] | data['vehicle_state']['pr'] |\
         data['vehicle_state']['ft'] | data['vehicle_state']['rt']
 vehicle_name = data['vehicle_state']['vehicle_name']
@@ -346,6 +347,23 @@ elif charging_state == "Stopped":
                 time.strftime("%A at %I:%M %p", time.localtime(scheduled_charging_start_time)))
     else:
         msg += "Charging is Stopped\n"
+
+if locked != True:
+    msg += "{} is unlocked!\n".format(vehicle_name)
+
+# Alert if Doors/Trunks are open
+if (door_status & 0x1):
+    msg += "Driver Front Door open!\n"
+if (door_status & 0x2):
+    msg += "Passenger Front Door open!\n"
+if (door_status & 0x4):
+    msg += "Driver Rear Door open!\n"
+if (door_status & 0x8):
+    msg += "Passenger Rear Door open!\n"
+if (door_status & 0x10):
+    msg += "Front Trunk open!\n"
+if (door_status & 0x20):
+    msg += "Rear Trunk open!\n"
 
 if sentry_mode == True:
     msg += "Sentry Mode is active\n"
