@@ -6,11 +6,14 @@ import time
 import sys
 
 from enum import Enum
-
+########################################
+#
+# Define Global Vars
+#
+########################################
 ERR_MSG = "TeslaAPI Failure!"
 SUC_MSG = "TeslaAPI"
 
-# Define command Enums
 CMD_LIST = "DATA \
         DUMP \
         LOCK \
@@ -27,7 +30,11 @@ CMD_LIST = "DATA \
         SET_CHARGE_LIMIT"
 CMD = Enum("CMD", CMD_LIST)
 
+########################################
+#
 # Parse incoming command
+#
+########################################
 user_cmd = sys.argv[1].lower()
 
 if user_cmd in [
@@ -107,7 +114,6 @@ elif "set the charge limit to" in user_cmd \
         or "set charge limit to" in user_cmd:
     cmd = CMD.SET_CHARGE_LIMIT
 
-    # Parse input
     percent = user_cmd.split(' ')[-1]
     if percent in [
             'percent',
@@ -133,13 +139,21 @@ else:
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
     exit()
 
+########################################
+#
 # Wake up car
+#
+########################################
 if teslaApi.carWakeUp() == -1:
     print("Unable to wakeup Tesla!")
     joinApi.push(ERR_MSG, "Unable to wakeup Tesla!")
     exit()
 
-# Get initial car data
+########################################
+#
+# Get initial car data and extract data
+#
+########################################
 data = teslaApi.access("VEHICLE_DATA")
 if data == -1:
     print("Unable to get Vehicle data!")
@@ -176,7 +190,11 @@ door_status = \
 vehicle_name = data['vehicle_state']['vehicle_name']
 sentry_mode = data['vehicle_state']['sentry_mode']
 
+########################################
+#
 # Process initial data before executing User command
+#
+########################################
 msg = ""
 if cmd == CMD.DATA:
     cmd_resp = data
@@ -316,12 +334,18 @@ elif cmd == CMD.SET_CHARGE_LIMIT:
     else:
         msg += "Setting {}'s charge limit to {}\n".format(vehicle_name, percent)
 
+########################################
+#
 # Append more vehicle info after user_cmd specific text
+#
+########################################
+# Get current Range info
 if charge_rate_units == "mi/hr":
     msg += "Current Range: {0} miles ({1}%)\n".format(battery_range, battery_level)
 else:
     msg += "Current Range: {0}% ({1} mi)\n".format(battery_level, battery_range)
 
+# Get Charging info
 if charging_state == "Charging":
     hours = math.floor(time_to_full_charge_in_dec)
     mins = round(60 * (time_to_full_charge_in_dec - hours))
@@ -370,5 +394,9 @@ if sentry_mode == True:
 
 msg += "{}\n".format(time.strftime("%A @ %I:%M %p", time.localtime()))
 
+########################################
+#
 # Final joinPush once user_cmd has executed
+#
+########################################
 joinApi.push(SUC_MSG, msg)
