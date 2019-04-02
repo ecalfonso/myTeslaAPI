@@ -80,7 +80,10 @@ def getVehicleID(api, env, headers):
     if vehID_req.status_code == 200:
         return json.loads(vehID_req.text)['response'][0]['id_s']
     else:
-        print("Unable to get Vehicle ID! Http error {}".format(wake_req.status_code))
+        if wake_req.status_code:
+            print("Unable to get Vehicle ID! Http error {}".format(wake_req.status_code))
+        else:
+            print("Unable to get Vehicle ID!")
         return -1
 
 def access(endpoint, data={}):
@@ -123,8 +126,11 @@ def access(endpoint, data={}):
     if api_req.status_code == 200:
         return json.loads(api_req.text)["response"]
     else:
-        print("Tesla API Access failed! Http error {}\n{}\n".format(
-            api_req.status_code, api_req.text))
+        if api_req.status_code:
+            print("Tesla API Access failed! Http error {}\n{}\n".format(
+                api_req.status_code, api_req.text))
+        else:
+            print("Tesla API Access failed!")
         return -1
 
 def carWakeUp():
@@ -166,5 +172,8 @@ def carWakeUp():
             elif sleepStatus_resp["response"][0]["state"] == "online":
                 return 0
         else:
-            print("Unable to get Vehicle Sleep Status! Http error {}".format(sleepStatus_req.status_code))
+            if sleepStatus_req.status_code:
+                print("Unable to get Vehicle Sleep Status! Http error {}".format(sleepStatus_req.status_code))
+            else:
+                print("Unable to get Vehicle Sleep Status!")
             return -1
