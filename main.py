@@ -189,6 +189,7 @@ door_status = \
         data['vehicle_state']['ft'] | data['vehicle_state']['rt']
 vehicle_name = data['vehicle_state']['vehicle_name']
 sentry_mode = data['vehicle_state']['sentry_mode']
+sw_update_status = data['vehicle_state']['software_update']['status']
 
 ########################################
 #
@@ -197,7 +198,11 @@ sentry_mode = data['vehicle_state']['sentry_mode']
 ########################################
 msg = ""
 if cmd == CMD.DATA:
-    cmd_resp = data
+    if sw_update_status != "":
+        msg += "Software Update Status: {}\n".format(sw_update_status)
+    if data["climate_state"]["is_auto_conditioning_on"] == True:
+        msg += "Auto conditioning from {}F to {}F, Outside temp: {}F\n".format(
+                inner_temp, target_temp, outer_temp)
 
 elif cmd == CMD.DUMP:
     print(data)
