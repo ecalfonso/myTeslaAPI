@@ -346,9 +346,13 @@ elif cmd == CMD.SET_CHARGE_LIMIT:
 ########################################
 # Get current Range info
 if charge_rate_units == "mi/hr":
-    msg += "Current Range: {0} miles ({1}%)\n".format(battery_range, battery_level)
+    expected_range = round(325 * battery_level)
+    msg += "Current Range: {} miles ({}%, {} mi diff)\n".format(
+            battery_range, battery_level, battery_range - expected_range)
 else:
-    msg += "Current Range: {0}% ({1} mi)\n".format(battery_level, battery_range)
+    expected_level = round((battery_range/325) * 100)
+    msg += "Current Range: {}% ({} mi, {}% diff)\n".format(
+            battery_level, battery_range, battery_level - expected_level)
 
 # Get Charging info
 if charging_state == "Charging":
