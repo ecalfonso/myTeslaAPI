@@ -27,7 +27,10 @@ CMD_LIST = "DATA \
         FLASH_LIGHTS \
         SENTRY_MODE_ON \
         SENTRY_MODE_OFF \
-        SET_CHARGE_LIMIT"
+        SET_CHARGE_LIMIT \
+        SEAT_HEATER_ON \
+        SEAT_HEATER_OFF"
+
 CMD = Enum("CMD", CMD_LIST)
 
 ########################################
@@ -134,6 +137,37 @@ elif "set the charge limit to" in user_cmd \
         else:
             joinApi.push(ERR_MSG, "Invalid Charge Limit: {}".format(percent))
             exit()
+elif "seat heater" in user_cmd:
+    if "set" in user_cmd:
+        cmd = CMD.SEAT_HEATER_ON
+        try:
+            seat_heater_level = user_cmd.split(' ')[-1]
+            if int(seat_heater_level) < 1 or 3 < int(seat_heater_level):
+                joinApi.push(ERR_MSG, "Invalid Seat Heater Level: {}".format(user_cmd.split(' ')[-1]))
+                exit()
+        except:
+            joinApi.push(ERR_MSG, "Invalid Seat Heater input: {}".format(user_cmd))
+            exit()
+
+    else:
+        cmd = CMD.SEAT_HEATER_OFF
+
+    if "driver" in user_cmd:
+        seat_heater_id = 0
+        seat_heater_str = "Driver's seat"
+    elif "passenger" in user_cmd:
+        seat_heater_id = 1
+        seat_heater_str = "Passenger's seat"
+    elif "back left" in user_cmd:
+        seat_heater_id = 2
+        seat_heater_str = "Rear Driver's seat"
+    elif "back middle" in user_cmd:
+        seat_heater_id = 4
+        seat_heater_str = "Rear Middle seat"
+    elif "back right" in user_cmd:
+        seat_heater_id = 5
+        seat_heater_str = "Rear Passenger's seat"
+
 else:
     print("Unable to process input string: {}".format(user_cmd))
     joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
@@ -339,6 +373,44 @@ elif cmd == CMD.SET_CHARGE_LIMIT:
     else:
         msg += "Setting {}'s charge limit to {}\n".format(vehicle_name, percent)
 
+elif cmd == CMD.SEAT_HEATER_ON:
+    # Turn on preconditioning before sending Seat Heat Req
+    if data["climate_state"]["is_auto_conditioning_on"] == False:
+        cmd_resp = teslaApi.access("CLIMATE_ON")
+        if cmd_resp == -1:
+            msg += "Failed to turn AC on for {}!\n".format(vehicle_name)
+    in_data = '{"heater":"'+str(seat_heater_id)+'", "level":"'+str(seat_heater_level)+'"}'
+    cmd_resp = teslaApi.access("REMOTE_SEAT_HEATER_REQUEST", data=str(in_data))
+    if cmd_resp == -1:
+        msg += "Failed to set {} heater to level {} for {}!\n".format(
+                seat_heater_str, seat_heater_level, vehicle_name)
+    else:
+        msg += "Setting {} heater to level {} for {}\n".format(
+                seat_heater_str, seat_heater_level, vehicle_name)
+
+
+elif cmd == CMD.SEAT_HEATER_OFF:
+    # If auto conditioning is off, heaters can't be on
+    if data["climate_state"]["is_auto_conditioning_on"] == False:
+         msg += "Seat Heaters are not on for {}!\n".format(vehicle_name)
+    else:
+        in_data = '{"heater":"'+str(seat_heater_id)+'", "level":"0"}'
+        cmd_resp = teslaApi.access("REMOTE_SEAT_HEATER_REQUEST", data=str(in_data))
+        if cmd_resp == -1:
+            msg += "Failed to turn off {} heater for {}!\n".format(
+                    seat_heater_str, vehicle_name)
+        else:
+            msg += "Turning {} heater for {}!\n".format(
+                    seat_heater_str, vehicle_name)
+    # If no other heater is on, turn off auto conditioning
+    data = teslaApi.access("VEHICLE_DATA")
+    if data["climate_state"]["seat_heater_left"] == 0 and \
+       data["climate_state"]["seat_heater_right"] == 0  and \
+       data["climate_state"]["seat_heater_rear_left"] == 0  and \
+       data["climate_state"]["seat_heater_rear_center"] == 0  and \
+       data["climate_state"]["seat_heater_rear_right"] == 0:
+        cmd_resp = teslaApi.access("CLIMATE_OFF")
+
 ########################################
 #
 # Append more vehicle info after user_cmd specific text
@@ -400,6 +472,23 @@ if (door_status & 0x20):
 
 if sentry_mode == True:
     msg += "Sentry Mode is active\n"
+
+# List which Seat Heaters may be on
+if data["climate_state"]["seat_heater_left"] != 0:
+    msg += "Driver's Seat Heater on level {}\n".format(
+            data["climate_state"]["seat_heater_left"])
+if data["climate_state"]["seat_heater_right"] != 0:
+    msg += "Passenger's Seat Heater on level {}\n".format(
+            data["climate_state"]["seat_heater_right"])
+if data["climate_state"]["seat_heater_rear_left"] != 0:
+    msg += "Rear Driver's Seat Heater on level {}\n".format(
+            data["climate_state"]["seat_heater_rear_left"])
+if data["climate_state"]["seat_heater_rear_center"] != 0:
+    msg += "Rear Middle Seat Heater on level {}\n".format(
+            data["climate_state"]["seat_heater_center"])
+if data["climate_state"]["seat_heater_rear_right"] != 0:
+    msg += "Rear Passenger's Seat Heater on level {}\n".format(
+            data["climate_state"]["seat_heater_rear_right"])
 
 msg += "{}\n".format(time.strftime("%A @ %I:%M %p", time.localtime()))
 
