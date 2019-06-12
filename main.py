@@ -234,7 +234,7 @@ msg = ""
 if cmd == CMD.DATA:
     if sw_update_status != "":
         msg += "Software Update Status: {}\n".format(sw_update_status)
-    if data["climate_state"]["is_auto_conditioning_on"] == True:
+    if data["climate_state"]["is_preconditioning"] == True:
         msg += "Auto conditioning from {}F to {}F, Outside temp: {}F\n".format(
                 inner_temp, target_temp, outer_temp)
 
@@ -244,7 +244,7 @@ elif cmd == CMD.DUMP:
     exit()
 
 elif cmd == CMD.AC_ON:
-    if data["climate_state"]["is_auto_conditioning_on"] == False:
+    if data["climate_state"]["is_preconditioning"] == False:
         cmd_resp = teslaApi.access("CLIMATE_ON")
         if cmd_resp == -1:
             msg += "Failed to turn AC on for {0}!\n".format(vehicle_name)
@@ -259,7 +259,7 @@ elif cmd == CMD.AC_ON:
         msg += "AC is already on for {0}. Inner Temp is {1}F\n".format(vehicle_name, inner_temp)
 
 elif cmd == CMD.AC_OFF:
-    if data["climate_state"]["is_auto_conditioning_on"] == True:
+    if data["climate_state"]["is_preconditioning"] == True:
         cmd_resp = teslaApi.access("CLIMATE_OFF")
         if cmd_resp == -1:
             msg += "Failed to turn AC off for {0}!\n".format(vehicle_name)
@@ -375,7 +375,7 @@ elif cmd == CMD.SET_CHARGE_LIMIT:
 
 elif cmd == CMD.SEAT_HEATER_ON:
     # Turn on preconditioning before sending Seat Heat Req
-    if data["climate_state"]["is_auto_conditioning_on"] == False:
+    if data["climate_state"]["is_preconditioning"] == False:
         cmd_resp = teslaApi.access("CLIMATE_ON")
         if cmd_resp == -1:
             msg += "Failed to turn AC on for {}!\n".format(vehicle_name)
@@ -390,8 +390,8 @@ elif cmd == CMD.SEAT_HEATER_ON:
 
 
 elif cmd == CMD.SEAT_HEATER_OFF:
-    # If auto conditioning is off, heaters can't be on
-    if data["climate_state"]["is_auto_conditioning_on"] == False:
+    # If preconditioning is off, heaters can't be on
+    if data["climate_state"]["is_preconditioning"] == False:
          msg += "Seat Heaters are not on for {}!\n".format(vehicle_name)
     else:
         in_data = '{"heater":"'+str(seat_heater_id)+'", "level":"0"}'
