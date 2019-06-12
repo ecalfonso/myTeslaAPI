@@ -237,6 +237,9 @@ if cmd == CMD.DATA:
     if data["climate_state"]["is_preconditioning"] == True:
         msg += "Auto conditioning from {}F to {}F, Outside temp: {}F\n".format(
                 inner_temp, target_temp, outer_temp)
+    elif data["climate_state"]["is_auto_conditioning_on"] == True:
+        msg += "Cabin Overheat Protection Running\nInner temp: {}F, Outside Temp: {}F\n".format(
+                inner_temp, outer_temp)
 
 elif cmd == CMD.DUMP:
     print(data)
