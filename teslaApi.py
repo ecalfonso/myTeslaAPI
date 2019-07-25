@@ -177,3 +177,22 @@ def carWakeUp():
             else:
                 print("Unable to get Vehicle Sleep Status!")
             return -1
+
+def testLogin():
+    # Check/Load Tesla API Endpoints
+    api = loadApi()
+    if api == -1:
+        print("Unable to load Tesla API!")
+        return -1
+    env = loadEnv()
+    if env == -1:
+        print("Unable to load Tesla Env!")
+        return -1
+
+    # Tesla API Auth Logic
+    headers = getHeaders(api, env)
+    if headers == -1:
+        print("Unable to generate HTTP headers!")
+        return -1
+
+    return 0

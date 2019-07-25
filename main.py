@@ -175,6 +175,16 @@ else:
 
 ########################################
 #
+# Test Tesla Login Credentials
+#
+########################################
+if teslaApi.testLogin() == -1:
+    print("Error with Tesla Credentials")
+    joinApi.push(ERR_MSG, "Issue with Tesla Credentials")
+    exit()
+
+########################################
+#
 # Wake up car
 #
 ########################################
