@@ -1,5 +1,4 @@
 *.json
 __pycache__
 backup
-execute.sh
 *.swp
