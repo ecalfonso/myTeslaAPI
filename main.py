@@ -266,6 +266,7 @@ battery_level = data['charge_state']['battery_level']
 battery_range = round(data['charge_state']['battery_range'])
 charge_limit_soc = data['charge_state']['charge_limit_soc']
 charge_miles_added_rated  = data['charge_state']['charge_miles_added_rated']
+charger_power = data['charge_state']['charger_power']
 charge_rate = data['charge_state']['charge_rate']
 charge_rate_units = data['gui_settings']['gui_charge_rate_units']
 charging_state  = data['charge_state']['charging_state']
@@ -478,7 +479,7 @@ elif cmd == CMD.SEAT_HEATER_OFF:
 ########################################
 # Get current Range info
 if charge_rate_units == "mi/hr":
-    expected_range = round(325 * battery_level)
+    expected_range = round(325 * (battery_level/100))
     msg += "Current Range: {} miles ({}%, {} mi diff)\n".format(
             battery_range, battery_level, battery_range - expected_range)
 else:
@@ -500,7 +501,7 @@ if charging_state == "Charging":
         msg += "{}% ({} miles) added at {} {}\n".format(
                 round((charge_miles_added_rated/325)*100),
                 charge_miles_added_rated,
-                charge_rate,
+                charger_power,
                 charge_rate_units)
     msg += "Time til full charge ({0}%):".format(charge_limit_soc)
     if hours > 0:
