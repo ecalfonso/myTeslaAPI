@@ -1,0 +1,1 @@
+[{"access": true, "user": "OWNER", "type": "owner", "pw": "SECRET1"}, {"access": true, "user": "GUEST1", "type": "guest", "pw": "SECRET2"}, {"access": false, "user": "GUEST2", "type": "guest", "pw": "SECRET3"}]

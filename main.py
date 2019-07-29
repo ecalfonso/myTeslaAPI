@@ -1,9 +1,11 @@
-import joinApi
 import json
 import math
-import teslaApi
 import time
 import sys
+
+import joinApi
+import teslaApi
+import usersApi
 
 from enum import Enum
 ########################################
@@ -33,12 +35,35 @@ CMD_LIST = "DATA \
 
 CMD = Enum("CMD", CMD_LIST)
 
+def ERROR(msg):
+    print(msg)
+    joinApi.push(ERR_MSG, msg)
+
+def SUCCESS(msg):
+    print(msg)
+    joinApi.push(SUC_MSG, msg)
+
+########################################
+#
+# Check User
+#
+########################################
+user = usersApi.get_user(sys.argv[1].lower(),
+                            sys.argv[2])
+if user == -1:
+    ERROR("User ({}) is not registered\n".format(sys.argv[1]))
+    exit()
+
+if user["access"] == False:
+    ERROR("User ({}) access denied\n".format(user["user"]))
+    exit()
+
 ########################################
 #
 # Parse incoming command
 #
 ########################################
-user_cmd = sys.argv[1].lower()
+user_cmd = sys.argv[3].lower()
 
 if user_cmd in [
         "data",
@@ -135,7 +160,7 @@ elif "set the charge limit to" in user_cmd \
             percent = min(percent, 100)
             percent = max(percent, 50)
         else:
-            joinApi.push(ERR_MSG, "Invalid Charge Limit: {}".format(percent))
+            ERROR("Invalid Charge Limit: {}".format(percent))
             exit()
 elif "seat heater" in user_cmd:
     if "set" in user_cmd:
@@ -143,10 +168,10 @@ elif "seat heater" in user_cmd:
         try:
             seat_heater_level = user_cmd.split(' ')[-1]
             if int(seat_heater_level) < 1 or 3 < int(seat_heater_level):
-                joinApi.push(ERR_MSG, "Invalid Seat Heater Level: {}".format(user_cmd.split(' ')[-1]))
+                ERROR("Invalid Seat Heater Level: {}".format(user_cmd.split(' ')[-1]))
                 exit()
         except:
-            joinApi.push(ERR_MSG, "Invalid Seat Heater input: {}".format(user_cmd))
+            ERROR("Invalid Seat Heater input: {}".format(user_cmd))
             exit()
 
     else:
@@ -167,10 +192,36 @@ elif "seat heater" in user_cmd:
     elif "back right" in user_cmd:
         seat_heater_id = 5
         seat_heater_str = "Rear Passenger's seat"
-
+elif "allow access to" in user_cmd:
+    if user["type"] != "owner":
+        ERROR("User ({}) attempting enable access for {}\n".format(
+                user["user"], user_cmd.split(" ")[-1]))
+    else:
+        tgt_user = user_cmd.split(" ")[-1]
+        if usersApi.is_user(tgt_user) == 0:
+            if usersApi.access_grant(tgt_user) == 0:
+                SUCCESS("Enabled TeslaApi access for {}\n".format(tgt_user))
+            else:
+                ERROR("Unable to grant access for {}!\n".format(tgt_user))
+        else:
+            ERROR("Unknown user: {}!\n".format(tgt_user))
+    exit()
+elif "deny access to" in user_cmd:
+    if user["type"] != "owner":
+        ERROR("User ({}) attempting disable access for {}\n".format(
+                user["user"], user_cmd.split(" ")[-1]))
+    else:
+        tgt_user = user_cmd.split(" ")[-1]
+        if usersApi.is_user(tgt_user) == 0:
+            if usersApi.access_deny(tgt_user) == 0:
+                SUCCESS("Disabled TeslaApi access for {}\n".format(tgt_user))
+            else:
+                ERROR("Unable to deny access for {}!\n".format(tgt_user))
+        else:
+            ERROR("Unknown user: {}!\n".format(tgt_user))
+    exit()
 else:
-    print("Unable to process input string: {}".format(user_cmd))
-    joinApi.push(ERR_MSG, "Unable to process input string: {}".format(user_cmd))
+    ERROR("Unable to process input string: {}".format(user_cmd))
     exit()
 
 ########################################
@@ -179,8 +230,7 @@ else:
 #
 ########################################
 if teslaApi.testLogin() == -1:
-    print("Error with Tesla Credentials")
-    joinApi.push(ERR_MSG, "Issue with Tesla Credentials")
+    ERROR("Issue with Tesla Credentials")
     exit()
 
 ########################################
@@ -189,8 +239,7 @@ if teslaApi.testLogin() == -1:
 #
 ########################################
 if teslaApi.carWakeUp() == -1:
-    print("Unable to wakeup Tesla!")
-    joinApi.push(ERR_MSG, "Unable to wakeup Tesla!")
+    ERROR("Unable to wakeup Tesla!")
     exit()
 
 ########################################
@@ -200,8 +249,7 @@ if teslaApi.carWakeUp() == -1:
 ########################################
 data = teslaApi.access("VEHICLE_DATA")
 if data == -1:
-    print("Unable to get Vehicle data!")
-    joinApi.push(ERR_MSG, "Unable to get Vehicle data!")
+    ERROR("Unable to get Vehicle data!")
     exit()
 
 # Extract climate data
@@ -252,8 +300,7 @@ if cmd == CMD.DATA:
                 inner_temp, outer_temp)
 
 elif cmd == CMD.DUMP:
-    print(data)
-    joinApi.push(SUC_MSG, json.dumps(data))
+    SUCCESS(json.dumps(data))
     exit()
 
 elif cmd == CMD.AC_ON:
@@ -505,9 +552,12 @@ if data["climate_state"]["seat_heater_rear_right"] != 0:
 
 msg += "{}\n".format(time.strftime("%A @ %I:%M %p", time.localtime()))
 
+if user["type"] == "guest":
+    msg += "Guest: {}\n".format(user["user"])
+
 ########################################
 #
 # Final joinPush once user_cmd has executed
 #
 ########################################
-joinApi.push(SUC_MSG, msg)
+SUCCESS(msg)
