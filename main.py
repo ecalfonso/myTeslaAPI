@@ -31,7 +31,9 @@ CMD_LIST = "DATA \
         SENTRY_MODE_OFF \
         SET_CHARGE_LIMIT \
         SEAT_HEATER_ON \
-        SEAT_HEATER_OFF"
+        SEAT_HEATER_OFF \
+        WINDOW_CLOSE \
+        WINDOW_OPEN"
 
 CMD = Enum("CMD", CMD_LIST)
 
@@ -220,6 +222,20 @@ elif "deny access to" in user_cmd:
         else:
             ERROR("Unknown user: {}!\n".format(tgt_user))
     exit()
+elif user_cmd in [
+        "close the windows",
+        "close all the windows",
+        "shut the windows"]:
+    cmd = CMD.WINDOW_CLOSE
+elif user_cmd in [
+        "open the windows",
+        "slightly open the windows",
+        "vent the windows",
+        "crack the windows",
+        "vent the car",
+        "air out the car",
+        "leave the windows slightly open"]:
+    cmd = CMD.WINDOW_OPEN
 else:
     ERROR("Unable to process input string: {}".format(user_cmd))
     exit()
@@ -449,7 +465,6 @@ elif cmd == CMD.SEAT_HEATER_ON:
         msg += "Setting {} heater to level {} for {}\n".format(
                 seat_heater_str, seat_heater_level, vehicle_name)
 
-
 elif cmd == CMD.SEAT_HEATER_OFF:
     # If preconditioning is off, heaters can't be on
     if data["climate_state"]["is_preconditioning"] == False:
@@ -471,6 +486,28 @@ elif cmd == CMD.SEAT_HEATER_OFF:
        data["climate_state"]["seat_heater_rear_center"] == 0  and \
        data["climate_state"]["seat_heater_rear_right"] == 0:
         cmd_resp = teslaApi.access("CLIMATE_OFF")
+
+elif cmd == CMD.WINDOW_CLOSE:
+    if data["vehicle_state"]["fd_window"] == 0 and \
+       data["vehicle_state"]["fp_window"] == 0 and \
+       data["vehicle_state"]["rd_window"] == 0 and \
+       data["vehicle_state"]["rp_window"] == 0:
+        msg += "{}'s windows are already closed\n".format(vehicle_name)
+    else:
+        in_data = '{"command":"close", "lat":"0", "lon":"0"}'
+        cmd_resp = teslaApi.access("WINDOW_CONTROL", data=str(in_data))
+        if cmd_resp == -1:
+            msg += "Failed to close {}'s windows!\n".format(vehicle_name)
+        else:
+            msg += "Closing {}'s windows\n".format(vehicle_name)
+
+elif cmd == CMD.WINDOW_OPEN:
+    in_data = '{"command":"vent", "lat":"0", "lon":"0"}'
+    cmd_resp = teslaApi.access("WINDOW_CONTROL", data=str(in_data))
+    if cmd_resp == -1:
+        msg += "Failed to vent {}'s windows!\n".format(vehicle_name)
+    else:
+        msg += "Venting {}'s windows\n".format(vehicle_name)
 
 ########################################
 #
@@ -530,6 +567,27 @@ if (door_status & 0x10):
     msg += "Front Trunk open!\n"
 if (door_status & 0x20):
     msg += "Rear Trunk open!\n"
+
+# Alert if windows are open or slightly open
+if (data['vehicle_state']['fd_window'] == 2):
+    msg+= "Front Driver's Window Open!\n"
+elif (data['vehicle_state']['fd_window'] == 1):
+    msg+= "Front Driver's Window Slightly Open!\n"
+
+if (data['vehicle_state']['fp_window'] == 2):
+    msg+= "Front Passenger's Window Open!\n"
+elif (data['vehicle_state']['fp_window'] == 1):
+    msg+= "Front Passengers's Window Slightly Open!\n"
+
+if (data['vehicle_state']['rd_window'] == 2):
+    msg+= "Rear Driver's Window Open!\n"
+elif (data['vehicle_state']['rd_window'] == 1):
+    msg+= "Rear Driver's Window Slightly Open!\n"
+
+if (data['vehicle_state']['rp_window'] == 2):
+    msg+= "Rear Passenger's Window Open!\n"
+elif (data['vehicle_state']['rp_window'] == 1):
+    msg+= "Rear Passenger's Window Slightly Open!\n"
 
 if sentry_mode == True:
     msg += "Sentry Mode is active\n"
