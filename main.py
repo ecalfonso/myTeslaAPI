@@ -299,6 +299,9 @@ door_status = \
 vehicle_name = data['vehicle_state']['vehicle_name']
 sentry_mode = data['vehicle_state']['sentry_mode']
 sw_update_status = data['vehicle_state']['software_update']['status']
+sw_update_version = data['vehicle_state']['software_update']['version']
+sw_update_download_perc = data['vehicle_state']['software_update']['download_perc']
+sw_update_install_perc = data['vehicle_state']['software_update']['install_perc']
 
 ########################################
 #
@@ -307,8 +310,13 @@ sw_update_status = data['vehicle_state']['software_update']['status']
 ########################################
 msg = ""
 if cmd == CMD.DATA:
-    if sw_update_status != "":
-        msg += "Software Update Status: {}\n".format(sw_update_status)
+    if sw_update_status == "download_wifi_wait":
+        msg += "Software Update {} Available\n".format(sw_update_version)
+    elif sw_update_status == "downloading":
+        msg += "Software Update {} Downloading... ({}%)\n".format(sw_update_version, sw_update_download_perc)
+    elif sw_update_status == "installing":
+        msg += "Software Update {} Installing... ({}%)\n".format(sw_update_version, sw_update_install_perc)
+
     if data["climate_state"]["is_preconditioning"] == True:
         msg += "Auto conditioning from {}F to {}F, Outside temp: {}F\n".format(
                 inner_temp, target_temp, outer_temp)
