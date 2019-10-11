@@ -310,7 +310,7 @@ sw_update_install_perc = data['vehicle_state']['software_update']['install_perc'
 ########################################
 msg = ""
 if cmd == CMD.DATA:
-    if sw_update_status == "download_wifi_wait":
+    if sw_update_status == "downloading_wifi_wait":
         msg += "Software Update {} Available\n".format(sw_update_version)
     elif sw_update_status == "downloading":
         msg += "Software Update {} Downloading... ({}%)\n".format(sw_update_version, sw_update_download_perc)
